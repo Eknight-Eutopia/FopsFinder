@@ -3,18 +3,15 @@ get_fops_def.py
 Retrieve struct file_operations's child's offset in kernel
 author: eut0pl4
 """
-from pathlib import Path
-
 import ida_domain
 from ida_domain import Database
-from ida_domain.database import IdaCommandOptions
 
 import ida_ida # this module will be loaded through ida_domain's loading.
 
 from utils.utils import is_newer_kernel
 from utils.logger import get_logger
 
-logger = get_logger("Kernel")
+logger = get_logger("CHAR")
 
 tty_magic_funcs = {
     "tty_open": 0,
@@ -88,13 +85,11 @@ def get_tty_fops(db: Database, caller_func_name: str, register_func_name: str):
 
 
 
-def get_fops(kernel_path):
-    ida_options = IdaCommandOptions(auto_analysis=True, new_database=False)
-    with Database.open(str(kernel_path), ida_options, False) as db:
-        if is_newer_kernel(db, "char"):
-            fops_addr = get_tty_fops(db, "tty_init", "cdev_init")
-        else:
-            fops_addr = get_tty_fops(db, "tty_register_driver", "register_chrdev")
+def get_char_fops(db):
+    if is_newer_kernel(db, "char"):
+        fops_addr = get_tty_fops(db, "tty_init", "cdev_init")
+    else:
+        fops_addr = get_tty_fops(db, "tty_register_driver", "register_chrdev")
 
     if fops_addr is not None:
         logger.info(f"file_operations child's offsets:")
