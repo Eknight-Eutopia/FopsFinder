@@ -1,0 +1,11 @@
+[project]
+name = "fopsfinder"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "colorlog>=6.12.0",
+    "ida-domain>=0.6.0",
+    "pyyaml>=6.0.3",
+]
