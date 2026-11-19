@@ -1,7 +1,12 @@
+from os import path
 import re
 
 from pathlib import Path
 from ida_domain import Database
+
+MAJOR_BLK = 2
+MINOR_BLK = 3
+PATCH_BLK = 36
 
 def detect_kernel_version(db: Database):
     """get the version code from vmlinux"""
@@ -28,5 +33,21 @@ def is_newer_kernel(db: Database, dev_type: str):
         if func is not None:
             return True
         return False
+    elif dev_type == "blk":
+        major, minor, patchlevel = detect_kernel_version(db)
+        if major > MAJOR_BLK:
+            return True
+        elif major == MAJOR_BLK:
+            if minor > MINOR_BLK:
+                return True
+            elif minor == MINOR_BLK:
+                if patchlevel > PATCH_BLK:
+                    return True
+                else:
+                    return False
+            else:
+                return False
+        else:
+            return False
     else:
         raise NotImplementedError

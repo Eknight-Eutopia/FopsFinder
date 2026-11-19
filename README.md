@@ -127,7 +127,92 @@ int __init tty_init(void)
 We can retrieve the file_operations struct from `cdev_init()`
 
 ### TODO: block_device_operations
+
+#### In newer kernel (>= 2.5.65)
 block_device_operations is used in block devices
+For blkdev, we only consider the open/release/ioctl syscall.
+
+The target blkdev is loop.
+The `lo_fops` struct(In kernel 4.19.151): 
+```c
+static const struct block_device_operations lo_fops = {
+	.owner =	THIS_MODULE,
+	.open =		lo_open,
+	.release =	lo_release,
+	.ioctl =	lo_ioctl,
+#ifdef CONFIG_COMPAT
+	.compat_ioctl =	lo_compat_ioctl,
+#endif
+};
+```
+
+And lo_fops is referenced in `loop_add`(In kernel 4.19.151):
+```c
+static int loop_add(struct loop_device **l, int i)
+{
+	struct loop_device *lo;
+	struct gendisk *disk;
+  ...
+	disk->flags |= GENHD_FL_EXT_DEVT;
+	atomic_set(&lo->lo_refcnt, 0);
+	lo->lo_number		= i;
+	spin_lock_init(&lo->lo_lock);
+	disk->major		= LOOP_MAJOR;
+	disk->first_minor	= i << part_shift;
+	disk->fops		= &lo_fops;
+	disk->private_data	= lo;
+	disk->queue		= lo->lo_queue;
+	sprintf(disk->disk_name, "loop%d", i);
+	add_disk(disk);
+	*l = lo;
+	return lo->lo_number;
+  ...
+}
+```
+But cuz the offset is possibly changed among the kernel's version, we should not locate fops child by hard-coding.
+In vmlinux kernel, the `lo_open`/`lo_release`/`lo_ioctl` funcs is only referenced in lo_fops. So we can get the referenced address, then traverse the address up to find the first defined global var. Then we need to validate it in `loop_add`, after which can we tell the target global var is `lo_fops`, then we can get the definition.
+
+#### In older kernel (2.3.37 - 2.5.64)
+In older kernel version, the blkdev is registered with `register_blkdev`
+```c
+int register_blkdev(unsigned int major, const char * name, struct block_device_operations *bdops)
+{
+	if (devfs_only())
+		return 0;
+	if (major == 0) {
+		for (major = MAX_BLKDEV-1; major > 0; major--) {
+			if (blkdevs[major] == NULL) {
+				blkdevs[major] = name;
+				return major;
+			}
+		}
+		return -EBUSY;
+	}
+	if (major >= MAX_BLKDEV)
+		return -EINVAL;
+	if (blkdevs[major])
+		return -EBUSY;
+	blkdevs[major] = name;
+	return 0;
+}
+```
+And the `loop_init` and `lo_open` are also defined, so we can still use the newer method.
+
+#### In Even older kernel (<= 2.3.36)
+In even older kernel version, the blkdev is registered with `register_blkdev`
+```c
+int register_blkdev(unsigned int major, const char * name, struct file_operations *fops)
+{
+	if (major >= MAX_BLKDEV)
+		return -EINVAL;
+	if (blkdevs[major].fops)
+		return -EBUSY;
+	blkdevs[major].name = name;
+	blkdevs[major].fops = fops;
+	return 0;
+}
+```
+So there is the same fops struct with char device.
 
 ### TODO: seq_operations
 
