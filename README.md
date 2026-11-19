@@ -19,27 +19,28 @@ python main.py -k /the/path/to/kernel.i64
 
 ## How it works
 
-### file_operations in the target module (char & block)
+### file_operations
 
+#### file_operations in the target module
+
+file_operations is usually used in char / procfs / misc devices
 There are several definitions in `module_init`
 
-#### 1. register_xxxdev in old kernel (< 2.5.70)
+##### 1. register_xxxdev in old kernel (< 2.5.70)
 
 ```c
 // for char device
 int register_chrdev(unsigned int major, const char * name, struct file_operations *fops);
 ```
 
-#### 2. cdev_init in newer kernel (>= 2.5.70)
+##### 2. cdev_init in newer kernel (>= 2.5.70)
 
 ```c
 // for char device
 void cdev_init(struct cdev *cdev, const struct file_operations *fops)
 ```
 
-
-
-### struct file_operations offset
+#### struct file_operations offset
 
 By accessing the `struct file_operations tty_fops`, we can get the exact file_operations offset.
 
@@ -124,4 +125,11 @@ int __init tty_init(void)
 }
 ```
 We can retrieve the file_operations struct from `cdev_init()`
+
+### TODO: block_device_operations
+block_device_operations is used in block devices
+
+### TODO: seq_operations
+
+seq_operations is often used in procfs devices
 
