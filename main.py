@@ -11,8 +11,8 @@ from ida_domain.database import IdaCommandOptions
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from char.get_fops_def import get_char_fops
-from block.get_fops_def import get_blk_fops
+from file_ops import get_char_fops
+from block_ops import get_blk_fops
 from utils.utils import detect_kernel_version
 from utils.logger import get_logger
 
