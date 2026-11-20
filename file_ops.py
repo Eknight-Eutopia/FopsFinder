@@ -62,12 +62,12 @@ def get_tty_fops(db: Database, caller_func_name: str, register_func_name: str):
             return None
         fops = call.call_args[1]
         fops_base = fops.expression
-        logger.debug(f"fops ea: {fops.expression.obj_ea}")
-        if fops.expression.x is not None:
-            fops_base = fops.expression.x
         if fops_base is None:
             logger.warning("fops arg is None.")
             return None
+        logger.debug(f"fops ea: {fops.expression.obj_ea}")
+        if fops.expression.x is not None:
+            fops_base = fops.expression.x
         fops_ea = fops_base.obj_ea
         if fops_ea is None:
             logger.warning("fops's ea is None")
