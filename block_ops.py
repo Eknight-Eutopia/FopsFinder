@@ -67,14 +67,12 @@ def get_lo_fops(db: Database):
             logger.warning(f"{funcname} not found")
             continue
         lo_xrefs = list(db.xrefs.to_item(lo_func.start_ea))
-        assert len(lo_xrefs) == 1
-        xref = lo_xrefs[0]
-        offset = xref.from_ea - fops_ea
-        loop_magic_funcs[funcname] = offset
-        logger.debug(f"found {funcname}'s offset: {offset :#x}")
+        for xref in lo_xrefs:
+            if xref.from_ea - fops_ea < 0x80:
+                offset = xref.from_ea - fops_ea
+                loop_magic_funcs[funcname] = offset
+                logger.debug(f"found {funcname}'s offset: {offset :#x}")
     return fops_ea
-
-
 
 
 def get_blk_fops(db):
