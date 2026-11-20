@@ -214,7 +214,16 @@ int register_blkdev(unsigned int major, const char * name, struct file_operation
 ```
 So there is the same fops struct with char device.
 
-### TODO: seq_operations
+### seq_operations
 
 seq_operations is often used in procfs devices
+While in all linux versions' code, the definition is the same:
+```c
+struct seq_operations {
+	void * (*start) (struct seq_file *m, loff_t *pos);
+	void (*stop) (struct seq_file *m, void *v);
+	void * (*next) (struct seq_file *m, void *v, loff_t *pos);
+	int (*show) (struct seq_file *m, void *v);
+};
+```
 
