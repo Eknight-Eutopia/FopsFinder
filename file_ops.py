@@ -3,10 +3,14 @@ get_fops_def.py
 Retrieve struct file_operations's child's offset in kernel
 author: eut0pl4
 """
+from logging import log
+
 import ida_domain
 from ida_domain import Database
+from ida_domain.pseudocode import PseudocodeExpressionOp
 
 import ida_ida # this module will be loaded through ida_domain's loading.
+from ida_hexrays import cot_idx, cot_obj, cot_ref
 
 from utils.utils import is_newer_kernel
 from utils.logger import get_logger
@@ -62,22 +66,46 @@ def get_tty_fops(db: Database, caller_func_name: str, register_func_name: str):
             return None
         fops = call.call_args[1]
         fops_base = fops.expression
+        breakpoint()
         if fops_base is None:
             logger.warning("fops arg is None.")
             return None
-        logger.debug(f"fops ea: {fops.expression.obj_ea}")
-        if fops.expression.x is not None:
+        if fops_base.op == PseudocodeExpressionOp.OBJ:
+            element_size = fops.expression.type_info.get_size()
+            if fops_base.obj_ea is None:
+                logger.warning(f"fops obj ea is None")
+                return None
+            fops_addr = db.bytes.get_bytes_at(fops_base.obj_ea, element_size)
+            if fops_addr is None:
+                logger.warning("fops_addr is None")
+                return None
+            fops_addr = int.from_bytes(fops_addr, get_byteorder(db))
+
+        elif fops_base.op == PseudocodeExpressionOp.IDX:
             fops_base = fops.expression.x
-        fops_ea = fops_base.obj_ea
-        if fops_ea is None:
-            logger.warning("fops's ea is None")
-            return None
-        element_size = fops.expression.type_info.get_size()
-        fops_addr = db.bytes.get_bytes_at(fops_ea, element_size)
-        if fops_addr is None:
-            logger.warning("fops_addr is None")
-            return None
-        fops_addr = int.from_bytes(fops_addr, get_byteorder(db))
+            if fops_base == None:
+                logger.warning("fops idx 0 is None")
+                return None
+            element_size = fops.expression.type_info.get_size()
+            if fops_base.obj_ea is None:
+                logger.warning(f"fops obj ea is None")
+                return None
+            fops_addr = db.bytes.get_bytes_at(fops_base.obj_ea, element_size)
+            if fops_addr is None:
+                logger.warning("fops_addr is None")
+                return None
+            fops_addr = int.from_bytes(fops_addr, get_byteorder(db))
+        elif fops_base.op == PseudocodeExpressionOp.REF:
+            fops_base = fops.expression.x
+            if fops_base == None:
+                logger.warning("fops idx 0 is None")
+                return None
+            fops_addr = fops_base.obj_ea if fops_base.obj_ea is not None else 0
+        else:
+            logger.error(f"Unknown fops type found: {fops_base.op}")
+            raise NotImplementedError
+        logger.debug(f"fops ea: {fops_base.obj_ea:#x}")
+
         logger.debug(f"candidate fops: {fops_addr:#x}")
         if validate_tty_fops(db, fops_addr):
             logger.info(f"tty_fops: {fops_addr:#x}")
