@@ -66,7 +66,6 @@ def get_tty_fops(db: Database, caller_func_name: str, register_func_name: str):
             return None
         fops = call.call_args[1]
         fops_base = fops.expression
-        breakpoint()
         if fops_base is None:
             logger.warning("fops arg is None.")
             return None
