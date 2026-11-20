@@ -172,6 +172,8 @@ static int loop_add(struct loop_device **l, int i)
 But cuz the offset is possibly changed among the kernel's version, we should not locate fops child by hard-coding.
 In vmlinux kernel, the `lo_open`/`lo_release`/`lo_ioctl` funcs is only referenced in lo_fops. So we can get the referenced address, then traverse the address up to find the first defined global var. Then we need to validate it in `loop_add`, after which can we tell the target global var is `lo_fops`, then we can get the definition.
 
+It seems that loop device is controlled by config `CONFIG_BLK_DEV_LOOP`, so we choose another mtd device, and the method is the same as loop above.
+
 #### In older kernel (2.3.37 - 2.5.64)
 In older kernel version, the blkdev is registered with `register_blkdev`
 ```c
