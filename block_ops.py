@@ -120,7 +120,7 @@ def get_mtd_fops(db: Database):
     if fops_xref.from_ea > add_mtd_blktrans_dev_func.start_ea and fops_xref.from_ea < add_mtd_blktrans_dev_func.end_ea:
         logger.debug("check pass")
     else:
-        logger.warning("fops_xref is not in loop_init")
+        logger.warning("fops_xref is not in add_mtd_blktrans_dev")
         return None
 
     # compute the child's offset
